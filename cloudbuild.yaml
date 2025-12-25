@@ -4,9 +4,9 @@ steps:
     args: 
       - 'build'
       - '-t'
-      - 'us-central1-docker.pkg.dev/$PROJECT_ID/nn-analyze-repo/nn-analyze:$COMMIT_SHA'
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/nn-analyze/nn-analyze:$COMMIT_SHA'
       - '-t'
-      - 'us-central1-docker.pkg.dev/$PROJECT_ID/nn-analyze-repo/nn-analyze:latest'
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/nn-analyze/nn-analyze:latest'
       - '.'
 
   # Push the container image to Artifact Registry
