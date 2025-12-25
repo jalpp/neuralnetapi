@@ -1,6 +1,10 @@
 {
   "name": "express",
   "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
   "dependencies": {
     "async-mutex": "^0.5.0",
     "chess.js": "^1.4.0",

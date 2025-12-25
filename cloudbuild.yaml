@@ -1,0 +1,58 @@
+steps:
+  # Build the container image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: 
+      - 'build'
+      - '-t'
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/nn-analyze-repo/nn-analyze:$COMMIT_SHA'
+      - '-t'
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/nn-analyze-repo/nn-analyze:latest'
+      - '.'
+
+  # Push the container image to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - '--all-tags'
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/nn-analyze-repo/nn-analyze'
+
+  # Deploy container image to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'nn-analyze-service'
+      - '--image'
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/nn-analyze-repo/nn-analyze:$COMMIT_SHA'
+      - '--region'
+      - 'us-central1'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--memory'
+      - '1Gi'
+      - '--cpu'
+      - '1'
+      - '--timeout'
+      - '100'
+      - '--min-instances'
+      - '0'
+      - '--max-instances'
+      - '1'
+      - '--concurrency'
+      - '1'
+      - '--cpu-throttling'
+      - '--set-env-vars'
+      - 'MAIA_MODEL_URL=${_MAIA_MODEL_URL},LEELA_MODEL_URL=${_LEELA_MODEL_URL},ELITE_LEELA_MODEL_URL=${_ELITE_LEELA_MODEL_URL}'
+
+# Store images in Artifact Registry
+images:
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/nn-analyze-repo/nn-analyze:$COMMIT_SHA'
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/nn-analyze-repo/nn-analyze:latest'
+
+# Build timeout
+timeout: '1800s'
+
+options:
+  machineType: 'E2_HIGHCPU_8'

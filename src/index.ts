@@ -8,7 +8,7 @@ app.use(cors());
 app.use(express.json());
 
 app.post("/nn-analyze", async (req, res) => {
-  const { fen, engine = "maia2", rating = 1500 } = req.body
+  const { fen, engine, rating } = req.body
   if (!fen) return res.status(400).json({ error: "FEN is required" })
 
   const modelLoader = await ModelLoaderPool.get()
@@ -31,4 +31,8 @@ app.post("/nn-analyze", async (req, res) => {
   res.json({ success: true, data: analysis })
 })
 
-export default app;
+const PORT = process.env.PORT || 8080;
+
+app.listen(PORT, () => {
+  console.log(`Neural Net Server running on port ${PORT}`);
+});

@@ -48,15 +48,7 @@ function extractTopMoves(
   const eliteleelaurl = process.env.ELITE_LEELA_MODEL_URL;
 /* -------------------- MODEL LOADER -------------------- */
 
-export class ModelLoader {
-  private maiaModel!: MaiaModel
-  private leelaModel!: LeelaModel
-  private eliteLeelaModel!: LeelaModel
-
-  private constructor() {}
-
-  
-   async downloadToTmp(url: string, filename: string): Promise<string> {
+async function downloadToTmp(url: string, filename: string): Promise<string> {
     const tmpPath = path.join("/tmp", filename)
     if (fs.existsSync(tmpPath)) return tmpPath
 
@@ -67,12 +59,20 @@ export class ModelLoader {
     return tmpPath
   }
 
+export class ModelLoader {
+  private maiaModel!: MaiaModel
+  private leelaModel!: LeelaModel
+  private eliteLeelaModel!: LeelaModel
+
+  private constructor() {}
+
+  
   static async create() {
     const loader = new ModelLoader()
 
-    const maiaPath = await loader.downloadToTmp(maiaUrl, "maia_rapid.onnx")
-    const leelaPath = await loader.downloadToTmp(leelaUrl, "t1-256x10.onnx")
-    const eliteLeelaPath = await loader.downloadToTmp(eliteleelaurl, "eliteleelav2.onnx")
+    const maiaPath = await downloadToTmp(maiaUrl, "maia_rapid.onnx")
+    const leelaPath = await downloadToTmp(leelaUrl, "t1-256x10.onnx")
+    const eliteLeelaPath = await downloadToTmp(eliteleelaurl, "eliteleelav2.onnx")
 
     loader.maiaModel = await MaiaModel.create(maiaPath)
     loader.leelaModel = await LeelaModel.create(leelaPath)
