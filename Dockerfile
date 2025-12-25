@@ -1,5 +1,5 @@
 # Use Node.js 23
-FROM node:23-alpine
+FROM node:20-slim
 
 # Set working directory
 WORKDIR /app
