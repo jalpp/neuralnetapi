@@ -22,3 +22,6 @@ To deploy:
 npm install
 vc deploy
 ```
+
+author
+@jalpp
