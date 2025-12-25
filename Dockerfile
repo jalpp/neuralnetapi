@@ -1,5 +1,4 @@
-# ---------- build ----------
-FROM node:20-slim AS builder
+FROM node:20-bullseye AS builder
 WORKDIR /app
 
 COPY package*.json ./
@@ -13,7 +12,7 @@ RUN npm run build
 RUN npm prune --production
 
 # ---------- runtime ----------
-FROM node:20-slim
+FROM node:20-bullseye
 WORKDIR /app
 
 COPY --from=builder /app/node_modules ./node_modules
