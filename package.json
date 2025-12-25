@@ -6,6 +6,8 @@
     "chess.js": "^1.4.0",
     "cors": "^2.8.5",
     "express": "5.1.0",
+    "node-fetch": "^3.3.2",
+    "onnxruntime-node": "^1.23.2",
     "stockfish": "^17.1.0"
   },
   "devDependencies": {
