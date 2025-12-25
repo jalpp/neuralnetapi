@@ -14,7 +14,7 @@ steps:
     args:
       - 'push'
       - '--all-tags'
-      - 'us-central1-docker.pkg.dev/$PROJECT_ID/nn-analyze-repo/nn-analyze'
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/nn-analyze/nn-analyze'
 
   # Deploy container image to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
