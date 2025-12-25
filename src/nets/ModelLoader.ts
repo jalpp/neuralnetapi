@@ -5,9 +5,7 @@ import {
   uciEvalToSan,
 } from "./sanhelper.js"
 import { fetchLichessBook } from "./lichessopeningbook.js"
-import fs from "fs"
-import path from "path"
-import fetch from "node-fetch"
+
 
 /* -------------------- SHARED TYPES -------------------- */
 
@@ -43,21 +41,17 @@ function extractTopMoves(
     }))
 }
 
-  const maiaUrl = process.env.MAIA_MODEL_URL
-  const leelaUrl = process.env.LEELA_MODEL_URL
-  const eliteleelaurl = process.env.ELITE_LEELA_MODEL_URL;
+  const MAIA_PATH =
+  process.env.MAIA_MODEL_PATH 
+
+const LEELA_PATH =
+  process.env.LEELA_MODEL_PATH 
+
+const ELITE_LEELA_PATH =
+  process.env.ELITE_LEELA_MODEL_PATH 
 /* -------------------- MODEL LOADER -------------------- */
 
-async function downloadToTmp(url: string, filename: string): Promise<string> {
-    const tmpPath = path.join("/tmp", filename)
-    if (fs.existsSync(tmpPath)) return tmpPath
 
-    const res = await fetch(url)
-    const arrayBuffer = await res.arrayBuffer()
-    const buffer = new Uint8Array(arrayBuffer)
-    fs.writeFileSync(tmpPath, buffer)
-    return tmpPath
-  }
 
 export class ModelLoader {
   private maiaModel!: MaiaModel
@@ -70,13 +64,11 @@ export class ModelLoader {
   static async create() {
     const loader = new ModelLoader()
 
-    const maiaPath = await downloadToTmp(maiaUrl, "maia_rapid.onnx")
-    const leelaPath = await downloadToTmp(leelaUrl, "t1-256x10.onnx")
-    const eliteLeelaPath = await downloadToTmp(eliteleelaurl, "eliteleelav2.onnx")
+  
 
-    loader.maiaModel = await MaiaModel.create(maiaPath)
-    loader.leelaModel = await LeelaModel.create(leelaPath)
-    loader.eliteLeelaModel = await LeelaModel.create(eliteLeelaPath)
+    loader.maiaModel = await MaiaModel.create(MAIA_PATH)
+    loader.leelaModel = await LeelaModel.create(LEELA_PATH)
+    loader.eliteLeelaModel = await LeelaModel.create(ELITE_LEELA_PATH)
     return loader
   }
 

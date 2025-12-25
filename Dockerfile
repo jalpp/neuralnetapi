@@ -1,27 +1,29 @@
-# Use Node.js 23
-FROM node:20-slim
-
-# Set working directory
+# ---------- build ----------
+FROM node:20-slim AS builder
 WORKDIR /app
 
-# Copy package files
 COPY package*.json ./
-
-# Install ALL dependencies (including dev dependencies for build)
 RUN npm ci
 
-# Copy application code
-COPY . .
+COPY src ./src
+COPY models ./models
+COPY tsconfig*.json ./
 
-# Build TypeScript
 RUN npm run build
-
-# Remove dev dependencies to reduce image size
 RUN npm prune --production
 
-# Expose port (Cloud Run uses PORT env variable)
-ENV PORT=8080
-EXPOSE 8080
+# ---------- runtime ----------
+FROM node:20-slim
+WORKDIR /app
 
-# Start the application
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/models ./models
+
+ENV PORT=8080
+ENV MAIA_MODEL_PATH=/models/maia_rapid.onnx
+ENV LEELA_MODEL_PATH=/models/t1-256x10.onnx
+ENV ELITE_LEELA_MODEL_PATH=/models/eliteleelav2.onnx
+
+EXPOSE 8080
 CMD ["node", "dist/index.js"]
