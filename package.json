@@ -1,0 +1,17 @@
+{
+  "name": "express",
+  "type": "module",
+  "dependencies": {
+    "async-mutex": "^0.5.0",
+    "chess.js": "^1.4.0",
+    "cors": "^2.8.5",
+    "express": "5.1.0",
+    "stockfish": "^17.1.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "5.0.0",
+    "@types/node": "20.11.17",
+    "typescript": "5.8.3"
+  }
+}
