@@ -5,6 +5,7 @@ import {
   uciEvalToSan,
 } from "./sanhelper.js"
 import { fetchLichessBook } from "./lichessopeningbook.js"
+import { MaiaEvaluation } from "./types.js"
 
 
 /* -------------------- SHARED TYPES -------------------- */
@@ -18,6 +19,7 @@ export interface MoveProbability {
 export interface EngineAnalysis {
   topMoves: MoveProbability[]
   inBook?: boolean
+  uciEval?: MaiaEvaluation
   source: "lichess-book" | "maia2" | "leela" | "elite-leela"
 }
 
@@ -119,6 +121,7 @@ export class ModelLoader {
 
     return {
       topMoves: extractTopMoves(sanEval.policy),
+      uciEval: uciEval,
       source: elite ? "elite-leela" : "leela",
     }
   }
