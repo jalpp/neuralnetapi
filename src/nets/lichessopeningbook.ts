@@ -11,7 +11,8 @@ const getRatingGroups = (elo: number): number[] => {
 
 export const fetchLichessBook = async (
   fen: string,
-  rating: number
+  rating: number,
+  token: string,
 ): Promise<LichessData> => {
   const params = new URLSearchParams({
     variant: 'standard',
@@ -22,8 +23,13 @@ export const fetchLichessBook = async (
   })
 
   const res = await fetch(
-    `https://explorer.lichess.ovh/lichess?${params}`
-  )
+      `https://explorer.lichess.org/lichess?${params.toString()}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
 
   if (!res.ok) {
     throw new Error(`Lichess error ${res.status}`)

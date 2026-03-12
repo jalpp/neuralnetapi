@@ -79,9 +79,10 @@ export class ModelLoader {
   async analyzeMaia2WithBook(
     fen: string,
     rating: number,
-    bookThreshold = 21
+    bookThreshold = 21,
+    token: string
   ): Promise<EngineAnalysis> {
-    const book = await fetchLichessBook(fen, rating)
+    const book = await fetchLichessBook(fen, rating, token)
     const games = book.white + book.draws + book.black
 
     if (games >= bookThreshold) {
