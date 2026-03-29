@@ -29,6 +29,7 @@ ENV PORT=8080
 ENV MAIA_MODEL_PATH=/app/models/maia_rapid.onnx
 ENV LEELA_MODEL_PATH=/app/models/t1-256x10.onnx
 ENV ELITE_LEELA_MODEL_PATH=/app/models/eliteleelav2.onnx
+ENV MAIA_THREE_PATH=/app/models/maia3_simplified.onnx
 
 EXPOSE 8080
 

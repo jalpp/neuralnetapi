@@ -28,20 +28,9 @@ export class LeelaModel{
     const policyTensor = pickOutput(outputs, ["policy", "/output/policy"]);
     const wdlTensor = pickOutput(outputs, ["wdl", "/output/wdl"]);
 
-    // console.log('=== LEELA SINGLE EVAL DEBUG ===')
-    // console.log('FEN:', fen)
-    // console.log('Policy tensor size:', policyTensor.size)
-    // console.log('Policy tensor dims:', policyTensor.dims)
-    // console.log('WDL tensor size:', wdlTensor.size)
-    // console.log('WDL tensor dims:', wdlTensor.dims)
-    // console.log('Legal moves count:', legalMoves.filter(m => m > 0).length)
-    // console.log('allPossibleMovesReversed length:', Object.keys(allPossibleMovesReversed || {}).length)
-    // console.log('================================')
-
     const value = wdlToWinProb(wdlTensor, fen);
     const policy = processLeelaPolicy(fen, policyTensor, legalMoves);
 
-    // Dispose tensors
     inputTensor.dispose();
     policyTensor.dispose();
     wdlTensor.dispose();
@@ -84,19 +73,6 @@ export class LeelaModel{
     const policyData = policyTensor.data as Float32Array;
     const wdlData = wdlTensor.data as Float32Array;
 
-    // DEBUG: Log tensor information for Leela
-    // console.log('=== LEELA BATCH DEBUG ===')
-    // console.log('Batch size:', batch)
-    // console.log('Policy tensor size:', policyTensor.size)
-    // console.log('Policy tensor dims:', policyTensor.dims)
-    // console.log('Policy data length:', policyData.length)
-    // console.log('WDL tensor size:', wdlTensor.size)
-    // console.log('WDL data length:', wdlData.length)
-    // console.log('allPossibleMovesReversed length:', Object.keys(allPossibleMovesReversed || {}).length)
-    // console.log('Calculated policy size per item:', policyTensor.size / batch)
-    // console.log('Expected policy size (hardcoded): 1858')
-    // console.log('========================')
-
     const results = [];
 
     for (let i = 0; i < batch; i++) {
@@ -114,7 +90,6 @@ export class LeelaModel{
       results.push({ policy, value });
     }
 
-    // Dispose tensors
     inputTensor.dispose();
     policyTensor.dispose();
     wdlTensor.dispose();

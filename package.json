@@ -3,6 +3,7 @@
   "type": "module",
   "scripts": {
     "build": "tsc",
+    "clean": "rm -rf dist",
     "start": "node dist/index.js"
   },
   "dependencies": {

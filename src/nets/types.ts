@@ -8,7 +8,7 @@ export type NetStatus =
   | 'ready'
   | 'error'
 
-export type ModelType = 'maia2' | 'bigLeela' | 'elitemaia'
+export type ModelType = 'maia2' | 'bigLeela' | 'elitemaia' | "maia3"
 
 export interface MaiaEngine {
   maia2?: NetModel

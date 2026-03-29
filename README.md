@@ -18,7 +18,7 @@ GPL
 ## Credits
 
 - Hollowleaf for leela pre-proccessing code
-- Maia devs for Maia class
+- Maia devs for Maia 2 and Maia 3
 - Lichess API
 
 # Author
