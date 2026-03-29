@@ -31,9 +31,9 @@ steps:
       - 'managed'
       - '--allow-unauthenticated'
       - '--memory'
-      - '1Gi'
+      - '4Gi'
       - '--cpu'
-      - '1'
+      - '2'
       - '--set-env-vars'
       - 'MAIA_MODEL_URL=${_MAIA_MODEL_URL},LEELA_MODEL_URL=${_LEELA_MODEL_URL},ELITE_LEELA_MODEL_URL=${_ELITE_LEELA_MODEL_URL}'
 
