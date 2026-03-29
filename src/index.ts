@@ -22,18 +22,10 @@ app.post("/nn-analyze", async (req, res) => {
   switch (engine) {
     case "maia3":
       analysis = await modelLoader.analyzeMaia3(fen, rating);
-
       break;
     case "maia2":
-      const token = req.headers.authorization?.split(" ")[1];
-
-      if (!token || token.length === 0) {
-        return res.status(401).json({
-          error: "Authorization Lichess API token required for maia2",
-        });
-      }
-      analysis = await modelLoader.analyzeMaia2WithBook(fen, rating, 5, token);
-      break;
+      analysis = await modelLoader.analyzeMaia3(fen, rating);
+      break;  
     case "leela":
       analysis = await modelLoader.analyzeLeela(fen);
       break;
