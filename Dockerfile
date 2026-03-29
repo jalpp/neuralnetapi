@@ -33,4 +33,4 @@ ENV MAIA_THREE_PATH=/app/models/maia3_simplified.onnx
 EXPOSE 8080
 
 # Start the application
-CMD ["node", "dist/index.js"]
+CMD ["node", "--max-old-space-size=3072", "--expose-gc", "dist/index.js"]

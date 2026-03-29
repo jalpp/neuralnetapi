@@ -15,6 +15,13 @@ export class LeelaModel{
     return instance
   }
 
+  /** Share an already-loaded NetModel session — avoids loading a second ONNX file */
+  static createFromNet(net: NetModel): LeelaModel {
+    const instance = new LeelaModel()
+    instance.net = net
+    return instance
+  }
+
   async evaluate(fen: string) {
 
     const { boardInput, legalMoves } = preprocessLeela(fen);

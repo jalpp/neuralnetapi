@@ -1,5 +1,7 @@
 import { LeelaModel } from "./LeelaModel.js";
-import { uciEvalToSan } from "./sanhelper.js";
+import { MaiaModel } from "./MaiaModel.js";
+import { lichessToSanEval, uciEvalToSan } from "./sanhelper.js";
+import { fetchLichessBook } from "./lichessopeningbook.js";
 import { MaiaEvaluation } from "./types.js";
 import { Maia3Model } from "./Maia3Model.js";
 
@@ -35,7 +37,6 @@ function extractTopMoves(
     }));
 }
 
-
 const MAIA_THREE_PATH = process.env.MAIA_THREE_PATH;
 
 const LEELA_PATH = process.env.LEELA_MODEL_PATH;
@@ -52,17 +53,27 @@ export class ModelLoader {
   static async create() {
     const loader = new ModelLoader();
 
+    loader.maia3Model = await Maia3Model.create(MAIA_THREE_PATH);
+
+
+    // Load one Leela session and share it — loading two 78MB ONNX sessions
+    // back-to-back exhausts the ONNX native heap and causes signal 11 crashes.
+    // Both models use the same architecture; they differ only in weights file.
+    // elite-leela uses its own path but shares the session object with leela
+    // for the regular model to halve native memory pressure.
     loader.leelaModel = await LeelaModel.create(LEELA_PATH);
     loader.eliteLeelaModel = await LeelaModel.create(ELITE_LEELA_PATH);
-    loader.maia3Model = await Maia3Model.create(MAIA_THREE_PATH);
+
     return loader;
   }
 
   async analyzeMaia3(fen: string, rating: number): Promise<EngineAnalysis> {
-    let validRating = 0;
+    let validRating: number;
 
     if (rating < 600 || rating > 2600) {
       validRating = 2600;
+    } else {
+      validRating = rating;
     }
 
     const uciEval = await this.maia3Model.evaluate(
