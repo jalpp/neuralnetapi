@@ -13,7 +13,7 @@ Features
 
 
 ## License:
-GPL 
+AGPL 
 
 ## Credits
 

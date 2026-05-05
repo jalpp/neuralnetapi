@@ -1,9 +1,8 @@
 import { LeelaModel } from "./LeelaModel.js";
-import { MaiaModel } from "./MaiaModel.js";
-import { lichessToSanEval, uciEvalToSan } from "./sanhelper.js";
-import { fetchLichessBook } from "./lichessopeningbook.js";
+import {  uciEvalToSan } from "./sanhelper.js";
 import { MaiaEvaluation } from "./types.js";
 import { Maia3Model } from "./Maia3Model.js";
+import { evalText } from "./humaneval.js";
 
 export interface MoveProbability {
   move: string;
@@ -16,6 +15,8 @@ export interface EngineAnalysis {
   inBook?: boolean;
   uciEval?: MaiaEvaluation;
   maiaRating?: number;
+  HumanEstimateEval?: string;
+  estimatedConvertedEval?: string;
   source: "lichess-book" | "maia2" | "leela" | "elite-leela" | "maia3";
 }
 
@@ -53,16 +54,9 @@ export class ModelLoader {
   static async create() {
     const loader = new ModelLoader();
 
-    loader.maia3Model = await Maia3Model.create(MAIA_THREE_PATH);
-
-
-    // Load one Leela session and share it — loading two 78MB ONNX sessions
-    // back-to-back exhausts the ONNX native heap and causes signal 11 crashes.
-    // Both models use the same architecture; they differ only in weights file.
-    // elite-leela uses its own path but shares the session object with leela
-    // for the regular model to halve native memory pressure.
-    loader.leelaModel = await LeelaModel.create(LEELA_PATH);
-    loader.eliteLeelaModel = await LeelaModel.create(ELITE_LEELA_PATH);
+    loader.maia3Model = await Maia3Model.create(MAIA_THREE_PATH!!);
+    loader.leelaModel = await LeelaModel.create(LEELA_PATH!!);
+    loader.eliteLeelaModel = await LeelaModel.create(ELITE_LEELA_PATH!!);
 
     return loader;
   }
@@ -87,6 +81,7 @@ export class ModelLoader {
     return {
       topMoves: extractTopMoves(sanEval.policy),
       maiaRating: validRating,
+      HumanEstimateEval: evalText(uciEval.value),
       source: "maia3",
     };
   }
@@ -99,6 +94,7 @@ export class ModelLoader {
     return {
       topMoves: extractTopMoves(sanEval.policy),
       uciEval: uciEval,
+      estimatedConvertedEval: evalText(uciEval.value),
       source: elite ? "elite-leela" : "leela",
     };
   }
