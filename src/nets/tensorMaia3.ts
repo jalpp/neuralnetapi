@@ -166,17 +166,23 @@ export function processOutputsMaia3(
   const expW = Math.exp(wdl[2] - maxWdl)
   const sumExp = expL + expD + expW
 
-  // Use softmaxed probabilities, not raw logits — required for wdlToLc0Cp
-  // (Maia3 mirrors the FEN pre-inference so WDL is already side-to-move relative; no flip needed)
-  const rawWdl: rawWdl = {
-    win:  expW / sumExp,
-    loss: expL / sumExp,
-    draw: expD / sumExp,
-  }
+  const probW = expW / sumExp
+  const probL = expL / sumExp
+  const probD = expD / sumExp
 
   let winProb = (expW + 0.5 * expD) / sumExp
   const blackToMove = fen.split(' ')[1] === 'b'
   if (blackToMove) winProb = 1 - winProb
+
+  // Maia3 mirrors the FEN for black-to-move, so the model always sees white-to-move.
+  // probW is therefore "mirrored-white wins" = "original-black wins".
+  // winProb is already flipped above for display purposes.
+  // rawWdl must also be flipped so win = original-white wins, matching wdlToLc0Cp convention.
+  const rawWdl: rawWdl = {
+    win:  blackToMove ? probL : probW,
+    loss: blackToMove ? probW : probL,
+    draw: probD,
+  }
   winProb = Math.round(winProb * 10000) / 10000
 
   const legalMoveIndices = Array.from(legalMoves)
