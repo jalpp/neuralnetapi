@@ -29,23 +29,29 @@ export function wdlToWinProb(wdl: Tensor, fen: string): {winProb: number, rawWdl
   // LC0 WDL format: [loss, draw, win] from white's perspective
   const draw = probs[1]
   const whiteWin = probs[2]
-
-  const rawWdl: rawWdl = {
-    win: whiteWin,
-    loss: probs[0],
-    draw: probs[1]
-  }
+  const whiteLoss = probs[0]
   
   // Calculate white's win probability
   const whiteWinProb = whiteWin + 0.5 * draw
   
-  // If it's black's turn, invert the probability
+  // If it's black's turn, invert the probability AND swap win/loss in rawWdl
+  // so that rawWdl is always side-to-move relative (win = side to move wins)
+  // This is required for wdlToLc0Cp to produce the correct sign
   const turn = fen.split(' ')[1]
+  const isBlack = turn === 'b'
+
+  const rawWdl: rawWdl = {
+    win:  isBlack ? whiteLoss : whiteWin,
+    loss: isBlack ? whiteWin  : whiteLoss,
+    draw: draw,
+  }
+
   return {
-    winProb: turn === 'b' ? 1 - whiteWinProb : whiteWinProb,
+    winProb: isBlack ? 1 - whiteWinProb : whiteWinProb,
     rawWdl
   }
 }
+
 
 /* ======================================================
    Leela policy processing

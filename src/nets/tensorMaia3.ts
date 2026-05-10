@@ -166,10 +166,12 @@ export function processOutputsMaia3(
   const expW = Math.exp(wdl[2] - maxWdl)
   const sumExp = expL + expD + expW
 
+  // Use softmaxed probabilities, not raw logits — required for wdlToLc0Cp
+  // (Maia3 mirrors the FEN pre-inference so WDL is already side-to-move relative; no flip needed)
   const rawWdl: rawWdl = {
-    win: wdl[2],
-    loss: wdl[0],
-    draw: wdl[1]
+    win:  expW / sumExp,
+    loss: expL / sumExp,
+    draw: expD / sumExp,
   }
 
   let winProb = (expW + 0.5 * expD) / sumExp
