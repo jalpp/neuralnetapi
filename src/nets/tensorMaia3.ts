@@ -141,6 +141,12 @@ export function preprocessMaia3(fen: string): {
   return { boardTokens, legalMoves }
 }
 
+export interface rawWdl {
+  win: number;
+  loss: number;
+  draw: number;
+}
+
 /**
  * Processes Maia 3 ONNX outputs.
  * Maia 3 outputs LDW (Loss/Draw/Win) logits and uses a 4352-dimensional move space.
@@ -150,7 +156,7 @@ export function processOutputsMaia3(
   logitsMove: Float32Array,
   logitsValue: Float32Array,
   legalMoves: Float32Array,
-): { policy: Record<string, number>; value: number } {
+): { policy: Record<string, number>; value: number; rawWdl: rawWdl } {
   const wdl = logitsValue
 
   // Model output: index 0 = Loss, 1 = Draw, 2 = Win (for side-to-move)
@@ -159,6 +165,12 @@ export function processOutputsMaia3(
   const expD = Math.exp(wdl[1] - maxWdl)
   const expW = Math.exp(wdl[2] - maxWdl)
   const sumExp = expL + expD + expW
+
+  const rawWdl: rawWdl = {
+    win: wdl[2],
+    loss: wdl[0],
+    draw: wdl[1]
+  }
 
   let winProb = (expW + 0.5 * expD) / sumExp
   const blackToMove = fen.split(' ')[1] === 'b'
@@ -190,5 +202,5 @@ export function processOutputsMaia3(
     Object.entries(moveProbs).sort(([, a], [, b]) => b - a),
   )
 
-  return { policy: sortedPolicy, value: winProb }
+  return { policy: sortedPolicy, value: winProb, rawWdl: rawWdl }
 }

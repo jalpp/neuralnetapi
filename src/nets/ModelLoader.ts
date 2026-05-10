@@ -2,7 +2,7 @@ import { LeelaModel } from "./LeelaModel.js";
 import {  uciEvalToSan } from "./sanhelper.js";
 import { MaiaEvaluation } from "./types.js";
 import { Maia3Model } from "./Maia3Model.js";
-import { evalText } from "./humaneval.js";
+import { evalText, lc0EvalText } from "./humaneval.js";
 
 export interface MoveProbability {
   move: string;
@@ -17,6 +17,7 @@ export interface EngineAnalysis {
   maiaRating?: number;
   HumanEstimateEval?: string;
   estimatedConvertedEval?: string;
+  LeelaZeroEstimateEval?: string;
   source: "lichess-book" | "maia2" | "leela" | "elite-leela" | "maia3";
 }
 
@@ -82,6 +83,7 @@ export class ModelLoader {
       topMoves: extractTopMoves(sanEval.policy),
       maiaRating: validRating,
       HumanEstimateEval: evalText(uciEval.value),
+      LeelaZeroEstimateEval: uciEval.rawWdl ? lc0EvalText(uciEval.rawWdl) : 'not_found',
       source: "maia3",
     };
   }
@@ -94,7 +96,8 @@ export class ModelLoader {
     return {
       topMoves: extractTopMoves(sanEval.policy),
       uciEval: uciEval,
-      estimatedConvertedEval: evalText(uciEval.value),
+      HumanEstimateEval: evalText(uciEval.value),
+      LeelaZeroEstimateEval: uciEval.rawWdl ? lc0EvalText(uciEval.rawWdl) : "not_found",
       source: elite ? "elite-leela" : "leela",
     };
   }

@@ -20,6 +20,7 @@ AGPL
 - Hollowleaf for leela pre-proccessing code
 - Maia devs for Maia 2 and Maia 3
 - Lichess API
+- lc0 devs and maia devs
 
 # Author
 @jalpp

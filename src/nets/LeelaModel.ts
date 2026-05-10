@@ -42,7 +42,7 @@ export class LeelaModel{
     policyTensor.dispose();
     wdlTensor.dispose();
 
-    return { policy, value };
+    return { policy, value: value.winProb, rawWdl: value.rawWdl };
   }
 
   async batchEval(

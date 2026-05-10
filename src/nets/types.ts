@@ -1,5 +1,6 @@
 import { Chess } from "chess.js"
 import NetModel from "./NetModel.js"
+import { rawWdl } from "./tensorMaia3.js"
 
 export type NetStatus =
   | 'loading'
@@ -24,6 +25,8 @@ export interface MaiaEngine {
 export interface MaiaEvaluation {
   value: number
   policy: { [key: string]: number }
+  rawWdl?: rawWdl
+
 }
 
 export const uciToSan = (uci: string, fen: string): string => {

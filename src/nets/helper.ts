@@ -4,6 +4,7 @@
 
 import { Tensor } from "onnxruntime-node"
 import { allPossibleMovesReversed, allPossibleMovesReversedMaia, mirrorMove } from "./tensor.js"
+import { rawWdl } from "./tensorMaia3.js"
 
 export function pickOutput(
   outputs: Record<string, Tensor>,
@@ -16,7 +17,7 @@ export function pickOutput(
 /**
  * Convert WDL (Win/Draw/Loss) tensor to win probability for the side to move
  */
-export function wdlToWinProb(wdl: Tensor, fen: string): number {
+export function wdlToWinProb(wdl: Tensor, fen: string): {winProb: number, rawWdl: rawWdl} {
   const data = wdl.data as Float32Array
   
   // Apply softmax to get probabilities
@@ -28,13 +29,22 @@ export function wdlToWinProb(wdl: Tensor, fen: string): number {
   // LC0 WDL format: [loss, draw, win] from white's perspective
   const draw = probs[1]
   const whiteWin = probs[2]
+
+  const rawWdl: rawWdl = {
+    win: whiteWin,
+    loss: probs[0],
+    draw: probs[1]
+  }
   
   // Calculate white's win probability
   const whiteWinProb = whiteWin + 0.5 * draw
   
   // If it's black's turn, invert the probability
   const turn = fen.split(' ')[1]
-  return turn === 'b' ? 1 - whiteWinProb : whiteWinProb
+  return {
+    winProb: turn === 'b' ? 1 - whiteWinProb : whiteWinProb,
+    rawWdl
+  }
 }
 
 /* ======================================================
