@@ -1,5 +1,4 @@
 steps:
-  # Build the container image
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'build'
@@ -9,14 +8,12 @@ steps:
       - 'us-central1-docker.pkg.dev/$PROJECT_ID/nn-analyze/nn-analyze:latest'
       - '.'
 
-  # Push the container image to Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'push'
       - '--all-tags'
       - 'us-central1-docker.pkg.dev/$PROJECT_ID/nn-analyze/nn-analyze'
 
-  # Deploy container image to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
     args:
@@ -35,10 +32,7 @@ steps:
       - '--cpu'
       - '2'
       - '--set-env-vars'
-        # FIRESTORE_PROJECT_ID is the only new variable.
-        # Auth is automatic on Cloud Run via the service account identity (ADC).
-        # No key file or secret needed.
-      - 'MAIA_MODEL_URL=${_MAIA_MODEL_URL},LEELA_MODEL_URL=${_LEELA_MODEL_URL},ELITE_LEELA_MODEL_URL=${_ELITE_LEELA_MODEL_URL},FIRESTORE_PROJECT_ID=$PROJECT_ID,FIRESTORE_DATABASE_ID=${_FIRESTORE_DATABASE_ID}'
+      - 'MAIA_MODEL_URL=${_MAIA_MODEL_URL},LEELA_MODEL_URL=${_LEELA_MODEL_URL},ELITE_LEELA_MODEL_URL=${_ELITE_LEELA_MODEL_URL},FIRESTORE_PROJECT_ID=$PROJECT_ID'
 
 images:
   - 'us-central1-docker.pkg.dev/$PROJECT_ID/nn-analyze/nn-analyze:$COMMIT_SHA'

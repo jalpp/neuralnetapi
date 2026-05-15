@@ -3,7 +3,6 @@ import { EngineAnalysis, NetName } from "./ModelLoader.js";
 
 const db = new Firestore({
   projectId: process.env.FIRESTORE_PROJECT_ID,
-  databaseId: process.env.FIRESTORE_DATABASE_ID
 });
 
 const COLLECTION = "nn_cache";
