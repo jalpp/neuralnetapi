@@ -3,8 +3,9 @@ import { uciEvalToSan } from "./sanhelper.js";
 import { MaiaEvaluation } from "./types.js";
 import { Maia3Model } from "./Maia3Model.js";
 import { evalText, lc0EvalText } from "./humaneval.js";
-import { getCached, putCached } from "./cache.js";
+import { getCached, putCached, putCachedBatch } from "./cache.js";
 import { Timestamp } from "@google-cloud/firestore";
+import { MAIA3_ALL_LEVELS } from "../validation.js";
 
 export interface MoveProbability {
   move: string;
@@ -105,6 +106,52 @@ export class ModelLoader {
 
     putCached(cacheNet, fen, result);
     return result;
+  }
+
+  /**
+   * Evaluates a single FEN across ALL 21 Maia3 rating levels (600–2600) in one
+   * batched ONNX inference call, then persists every result to Firestore.
+   * Returns an array ordered by ascending rating level.
+   */
+  async batchAnalyzeMaia3AllLevels(
+    fen: string,
+  ): Promise<{ rating: number; analysis: EngineAnalysis }[]> {
+    // Build the 21 position descriptors for batchEvaluate
+    const positions = MAIA3_ALL_LEVELS.map((rating) => ({
+      fen,
+      eloSelf: rating,
+      eloOppo: rating,
+    }));
+
+    // Single batched ONNX call — much cheaper than 21 sequential calls
+    const rawResults = await this.maia3Model.batchEvaluate(positions);
+
+    const output: { rating: number; analysis: EngineAnalysis }[] = [];
+
+    for (let i = 0; i < MAIA3_ALL_LEVELS.length; i++) {
+      const rating = MAIA3_ALL_LEVELS[i];
+      const uciEval = rawResults[i];
+      const sanEval = uciEvalToSan(uciEval, fen);
+      const cacheNet = `maia3_${rating}` as NetName;
+
+      const analysis: EngineAnalysis = {
+        topMoves: extractTopMoves(sanEval.policy),
+        maiaRating: rating,
+        HumanEstimateEval: evalText(uciEval.value),
+        LeelaZeroEstimateEval: uciEval.rawWdl
+          ? lc0EvalText(uciEval.rawWdl)
+          : "not_found",
+        _fen: fen,
+        _net: cacheNet,
+      };
+
+      output.push({ rating, analysis });
+    }
+
+    // Persist all 21 results to Firestore in one go (fire-and-forget safe)
+    await putCachedBatch(fen, output);
+
+    return output;
   }
 
   getLeelaModel() { return this.leelaModel; }
