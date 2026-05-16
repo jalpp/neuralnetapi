@@ -22,6 +22,7 @@ export interface EngineAnalysis {
   HumanEstimateEval?: string;
   estimatedConvertedEval?: string;
   LeelaZeroEstimateEval?: string;
+  cacheHit?: boolean;
   _fen?: string;
   _net?: NetName;
   _createdAt?: Timestamp
@@ -80,6 +81,7 @@ export class ModelLoader {
       maiaRating: validRating,
       HumanEstimateEval: evalText(uciEval.value),
       LeelaZeroEstimateEval: uciEval.rawWdl ? lc0EvalText(uciEval.rawWdl) : "not_found",
+      cacheHit: false,
       _net: cacheNet,
     };
 
@@ -101,6 +103,7 @@ export class ModelLoader {
       uciEval,
       HumanEstimateEval: evalText(uciEval.value),
       LeelaZeroEstimateEval: uciEval.rawWdl ? lc0EvalText(uciEval.rawWdl) : "not_found",
+      cacheHit: false,
       _net: cacheNet,
     };
 
@@ -148,7 +151,6 @@ export class ModelLoader {
       output.push({ rating, analysis });
     }
 
-    // Persist all 21 results to Firestore in one go (fire-and-forget safe)
     await putCachedBatch(fen, output);
 
     return output;

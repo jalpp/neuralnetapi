@@ -23,7 +23,8 @@ export async function getCached(
 ): Promise<EngineAnalysis | null> {
   try {
     const snap = await db.collection(COLLECTION).doc(docId(net, fen)).get();
-    return snap.exists ? (snap.data() as EngineAnalysis) : null;
+    if (!snap.exists) return null;
+    return { ...(snap.data() as EngineAnalysis), cacheHit: true };
   } catch (err) {
     console.error("[cache] read error:", err);
     return null;
