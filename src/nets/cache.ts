@@ -49,15 +49,7 @@ export async function putCached(
   }
 }
 
-/**
- * Persists a full batch (all 21 Maia3 rating levels) for a single FEN.
- *
- * Layout in Firestore:
- *   nn_batch_results/{safeFen}        — top-level summary doc
- *     ratings/{rating}               — sub-collection, one doc per level
- *
- * Firestore batched writes are limited to 500 ops; 21 ratings + 1 summary = 22, well within limit.
- */
+
 export async function putCachedBatch(
   fen: string,
   levels: { rating: number; analysis: EngineAnalysis }[],
@@ -67,7 +59,6 @@ export async function putCachedBatch(
     const batch = db.batch();
     const now = Timestamp.now();
 
-    // Summary document
     const summaryRef = db.collection(BATCH_COLLECTION).doc(safeFen);
     batch.set(summaryRef, {
       _fen: normaliseFen(fen),
@@ -75,16 +66,8 @@ export async function putCachedBatch(
       ratingsCovered: levels.map((l) => l.rating),
     });
 
-    // One sub-document per rating level
     for (const { rating, analysis } of levels) {
-      const ratingRef = summaryRef.collection("ratings").doc(String(rating));
-      batch.set(ratingRef, {
-        ...analysis,
-        _fen: normaliseFen(fen),
-        _createdAt: now,
-      });
-
-      // Also mirror into the regular cache so single-FEN lookups are warm
+   
       const cacheRef = db
         .collection(COLLECTION)
         .doc(docId(`maia3_${rating}` as NetName, fen));

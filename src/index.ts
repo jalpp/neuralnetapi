@@ -44,9 +44,6 @@ app.post("/nn-analyze", async (req: Request, res: Response) => {
       case "maia3":
         analysis = await modelLoader.analyzeMaia3(fen, Number(rating));
         break;
-      case "maia2":
-        analysis = await modelLoader.analyzeMaia3(fen, Number(rating));
-        break;
       case "leela":
         analysis = await modelLoader.analyzeLeela(fen);
         break;
@@ -100,5 +97,5 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
 const PORT = process.env.PORT || 8080;
 
 app.listen(PORT, () => {
-  console.log(`Chess Neural Net Server running on port ${PORT}`);
+  console.log(`Chess Neural Net Database Server running on port ${PORT}`);
 });
