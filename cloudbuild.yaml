@@ -31,6 +31,8 @@ steps:
       - '4Gi'
       - '--cpu'
       - '2'
+      - '--max-instances'
+      - '5'
       - '--set-env-vars'
       - 'MAIA_MODEL_URL=${_MAIA_MODEL_URL},LEELA_MODEL_URL=${_LEELA_MODEL_URL},ELITE_LEELA_MODEL_URL=${_ELITE_LEELA_MODEL_URL},FIRESTORE_PROJECT_ID=$PROJECT_ID'
 

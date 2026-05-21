@@ -1,5 +1,6 @@
 import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
+import { rateLimit } from "express-rate-limit";
 import { ModelLoaderPool } from "./nets/ModelLoaderPool.js";
 import {
   validateFen,
@@ -13,8 +14,24 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+const analyzeLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: { error: "Too many requests, please try again after a minute." },
+});
 
-app.post("/nn-analyze", async (req: Request, res: Response) => {
+const batchLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 5,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: { error: "Too many batch requests, please try again after a minute." },
+});
+
+
+app.post("/nn-analyze", analyzeLimiter, async (req: Request, res: Response) => {
   const { fen, engine, rating } = req.body;
 
   // Always validate FEN and engine
@@ -61,7 +78,7 @@ app.post("/nn-analyze", async (req: Request, res: Response) => {
   }
 });
 
-app.post("/nn-batch-maia3", async (req: Request, res: Response) => {
+app.post("/nn-batch-maia3", batchLimiter, async (req: Request, res: Response) => {
   const { fen } = req.body;
 
   const fenResult = validateFen(fen);

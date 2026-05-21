@@ -17,6 +17,10 @@ function docId(net: NetName, fen: string): string {
   return `${net}__${safeFen}`;
 }
 
+function batchDocId(fen: string): string {
+  return normaliseFen(fen).replace(/\//g, "|");
+}
+
 export async function getCached(
   net: NetName,
   fen: string,
@@ -49,37 +53,72 @@ export async function putCached(
   }
 }
 
+// ── Batch (all-21-levels) cache — 1 document, 1 read, 1 write ──────────────
+//
+// Document shape in nn_batch_results/<fenId>:
+// {
+//   _fen: string,
+//   _createdAt: Timestamp,
+//   levels: {
+//     "600":  EngineAnalysis,
+//     "700":  EngineAnalysis,
+//     ...
+//     "2600": EngineAnalysis,
+//   }
+// }
 
-export async function putCachedBatch(
+export interface BatchCacheDoc {
+  _fen: string;
+  _createdAt: Timestamp;
+  levels: Record<string, EngineAnalysis>;
+}
+
+/**
+ * Returns all 21 levels from a single Firestore read, or null on miss.
+ */
+export async function getBatchCached(
+  fen: string,
+): Promise<{ rating: number; analysis: EngineAnalysis }[] | null> {
+  try {
+    const snap = await db
+      .collection(BATCH_COLLECTION)
+      .doc(batchDocId(fen))
+      .get();
+    if (!snap.exists) return null;
+
+    const doc = snap.data() as BatchCacheDoc;
+    if (!doc.levels) return null;
+
+    return Object.entries(doc.levels).map(([ratingStr, analysis]) => ({
+      rating: Number(ratingStr),
+      analysis: { ...analysis, cacheHit: true },
+    }));
+  } catch (err) {
+    console.error("[cache] batch read error:", err);
+    return null;
+  }
+}
+
+/**
+ * Persists all 21 levels as one Firestore document — 1 write total.
+ */
+export async function putBatchCached(
   fen: string,
   levels: { rating: number; analysis: EngineAnalysis }[],
 ): Promise<void> {
   try {
-    const safeFen = normaliseFen(fen).replace(/\//g, "|");
-    const batch = db.batch();
-    const now = Timestamp.now();
-
-    const summaryRef = db.collection(BATCH_COLLECTION).doc(safeFen);
-    batch.set(summaryRef, {
-      _fen: normaliseFen(fen),
-      _createdAt: now,
-      ratingsCovered: levels.map((l) => l.rating),
-    });
-
+    const levelsMap: Record<string, EngineAnalysis> = {};
     for (const { rating, analysis } of levels) {
-   
-      const cacheRef = db
-        .collection(COLLECTION)
-        .doc(docId(`maia3_${rating}` as NetName, fen));
-      batch.set(cacheRef, {
-        ...analysis,
-        _fen: normaliseFen(fen),
-        _net: `maia3_${rating}`,
-        _createdAt: now,
-      });
+      levelsMap[String(rating)] = analysis;
     }
 
-    await batch.commit();
+    const doc: BatchCacheDoc = {
+      _fen: normaliseFen(fen),
+      _createdAt: Timestamp.now(),
+      levels: levelsMap,
+    };
+
+    await db.collection(BATCH_COLLECTION).doc(batchDocId(fen)).set(doc);
   } catch (err) {
     console.error("[cache] batch write error:", err);
   }
