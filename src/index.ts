@@ -31,7 +31,7 @@ const batchLimiter = rateLimit({
 });
 
 
-app.post("/nn-analyze", analyzeLimiter, async (req: Request, res: Response) => {
+app.post("/nn-analyze", async (req: Request, res: Response) => {
   const { fen, engine, rating } = req.body;
 
   // Always validate FEN and engine
@@ -78,7 +78,7 @@ app.post("/nn-analyze", analyzeLimiter, async (req: Request, res: Response) => {
   }
 });
 
-app.post("/nn-batch-maia3", batchLimiter, async (req: Request, res: Response) => {
+app.post("/nn-batch-maia3", async (req: Request, res: Response) => {
   const { fen } = req.body;
 
   const fenResult = validateFen(fen);
