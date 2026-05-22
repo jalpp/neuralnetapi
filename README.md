@@ -29,7 +29,9 @@
 
 * **Chessboardmagic devs** [Toan Hoang](https://github.com/HollowLeaf1981) for leela procesing logic 
 
-# Author
+
+## Author
+
 @jalpp
 
 
