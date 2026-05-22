@@ -1,7 +1,3 @@
-/* ======================================================
-   Helpers
-====================================================== */
-
 import { Tensor } from "onnxruntime-node"
 import { allPossibleMovesReversed, allPossibleMovesReversedMaia, mirrorMove } from "./tensor.js"
 import { rawWdl } from "./tensorMaia3.js"

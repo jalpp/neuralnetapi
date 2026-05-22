@@ -45,10 +45,19 @@ function extractTopMoves(
       percentage: toPercentageString(probability),
     }));
 }
+const DISABLE_CACHE =
+  process.env.DISABLE_CACHE?.toLowerCase() === "true" || process.argv.includes("dev");
 
-const MAIA_THREE_PATH = process.env.MAIA_THREE_PATH;
-const LEELA_PATH = process.env.LEELA_MODEL_PATH;
-const ELITE_LEELA_PATH = process.env.ELITE_LEELA_MODEL_PATH;
+const MAIA_THREE_PATH = DISABLE_CACHE
+  ? "./models/maia3_simplified.onnx"
+  : process.env.MAIA_THREE_PATH;
+const LEELA_PATH = DISABLE_CACHE
+  ? "./models/t1-256x10.onnx"
+  : process.env.LEELA_MODEL_PATH;
+const ELITE_LEELA_PATH = DISABLE_CACHE
+  ? "./models/eliteleelav2.onnx"
+  : process.env.ELITE_LEELA_MODEL_PATH;
+
 
 export class ModelLoader {
   private leelaModel!: LeelaModel;
@@ -68,7 +77,7 @@ export class ModelLoader {
   async analyzeMaia3(fen: string, rating: number): Promise<EngineAnalysis> {
     const validRating = rating < 600 || rating > 2600 ? 2600 : rating;
     const cacheNet = `maia3_${validRating}` as NetName;
-    const hit = await getCached(cacheNet, fen);
+    const hit = !DISABLE_CACHE ? await getCached(cacheNet, fen) : null;
     if (hit) return hit as EngineAnalysis;
 
     const uciEval = await this.maia3Model.evaluate(fen, validRating, validRating);
@@ -83,13 +92,13 @@ export class ModelLoader {
       _net: cacheNet,
     };
 
-    putCached(cacheNet, fen, result);
+    if (!DISABLE_CACHE) putCached(cacheNet, fen, result);
     return result;
   }
 
   async analyzeLeela(fen: string, elite = false): Promise<EngineAnalysis> {
     const cacheNet = elite ? "elite_leela" : "leela";
-    const hit = await getCached(cacheNet, fen);
+    const hit = !DISABLE_CACHE ? await getCached(cacheNet, fen) : null;
     if (hit) return hit as EngineAnalysis;
 
     const model = elite ? this.eliteLeelaModel : this.leelaModel;
@@ -105,7 +114,9 @@ export class ModelLoader {
       _net: cacheNet,
     };
 
-    putCached(cacheNet, fen, result);
+    if (!DISABLE_CACHE) {
+      putCached(cacheNet, fen, result);
+    }
     return result;
   }
 
@@ -113,7 +124,7 @@ export class ModelLoader {
   async batchAnalyzeMaia3AllLevels(
     fen: string,
   ): Promise<{ rating: number; analysis: EngineAnalysis }[]> {
-    const cached = await getBatchCached(fen);
+    const cached = !DISABLE_CACHE ? await getBatchCached(fen) : null;
     if (cached) return cached;
 
     // Build the 21 position descriptors for batchEvaluate
@@ -147,7 +158,9 @@ export class ModelLoader {
       output.push({ rating, analysis });
     }
 
-    await putBatchCached(fen, output);
+    if (!DISABLE_CACHE) {
+       await putBatchCached(fen, output);
+    }
 
     return output;
   }

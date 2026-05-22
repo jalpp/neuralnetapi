@@ -53,19 +53,6 @@ export async function putCached(
   }
 }
 
-// ── Batch (all-21-levels) cache — 1 document, 1 read, 1 write ──────────────
-//
-// Document shape in nn_batch_results/<fenId>:
-// {
-//   _fen: string,
-//   _createdAt: Timestamp,
-//   levels: {
-//     "600":  EngineAnalysis,
-//     "700":  EngineAnalysis,
-//     ...
-//     "2600": EngineAnalysis,
-//   }
-// }
 
 export interface BatchCacheDoc {
   _fen: string;
@@ -73,9 +60,6 @@ export interface BatchCacheDoc {
   levels: Record<string, EngineAnalysis>;
 }
 
-/**
- * Returns all 21 levels from a single Firestore read, or null on miss.
- */
 export async function getBatchCached(
   fen: string,
 ): Promise<{ rating: number; analysis: EngineAnalysis }[] | null> {
@@ -99,9 +83,7 @@ export async function getBatchCached(
   }
 }
 
-/**
- * Persists all 21 levels as one Firestore document — 1 write total.
- */
+
 export async function putBatchCached(
   fen: string,
   levels: { rating: number; analysis: EngineAnalysis }[],

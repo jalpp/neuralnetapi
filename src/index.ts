@@ -14,31 +14,21 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const analyzeLimiter = rateLimit({
+const limiter = rateLimit({
   windowMs: 60 * 1000,
-  max: 30,
+  max: 120,
   standardHeaders: "draft-7",
   legacyHeaders: false,
   message: { error: "Too many requests, please try again after a minute." },
 });
 
-const batchLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 5,
-  standardHeaders: "draft-7",
-  legacyHeaders: false,
-  message: { error: "Too many batch requests, please try again after a minute." },
-});
 
-
-app.post("/nn-analyze", async (req: Request, res: Response) => {
+app.post("/nn-analyze", limiter, async (req: Request, res: Response) => {
   const { fen, engine, rating } = req.body;
 
-  // Always validate FEN and engine
   const fenResult = validateFen(fen);
   const engineResult = validateEngine(engine);
 
-  // Conditionally validate rating for Maia engines
   const needsRating = engine === "maia3" || engine === "maia2";
   const ratingResult = needsRating
     ? validateMaiaRating(rating)
@@ -78,7 +68,7 @@ app.post("/nn-analyze", async (req: Request, res: Response) => {
   }
 });
 
-app.post("/nn-batch-maia3", async (req: Request, res: Response) => {
+app.post("/nn-batch-maia3", limiter, async (req: Request, res: Response) => {
   const { fen } = req.body;
 
   const fenResult = validateFen(fen);
@@ -105,7 +95,6 @@ app.post("/nn-batch-maia3", async (req: Request, res: Response) => {
   }
 });
 
-// Generic error handler
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   console.error("[unhandled]", err);
   res.status(500).json({ error: "Internal server error" });
@@ -113,6 +102,8 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
 
 const PORT = process.env.PORT || 8080;
 
+const DISABLE_CACHE_MODE = process.env.DISABLE_CACHE?.toLowerCase() === "true" || process.argv.includes("dev");
+
 app.listen(PORT, () => {
-  console.log(`Chess Neural Net Database Server running on port ${PORT}`);
+  console.log(`Chess Neural Net Database Server running on port ${PORT} DISABLE_CACHE_MODE: ${DISABLE_CACHE_MODE}`);
 });
