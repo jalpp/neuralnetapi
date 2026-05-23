@@ -61,7 +61,7 @@ const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
   next();
 };
 
-app.post("/nn-analyze", authMiddleware, limiter, async (req: Request, res: Response) => {
+app.post("/nn-analyze", authMiddleware, async (req: Request, res: Response) => {
   const { fen, engine, rating } = req.body;
 
   const fenResult = validateFen(fen);
@@ -106,7 +106,7 @@ app.post("/nn-analyze", authMiddleware, limiter, async (req: Request, res: Respo
   }
 });
 
-app.post("/nn-batch-maia3", authMiddleware, limiter, async (req: Request, res: Response) => {
+app.post("/nn-batch-maia3", authMiddleware, async (req: Request, res: Response) => {
   const { fen } = req.body;
 
   const fenResult = validateFen(fen);
