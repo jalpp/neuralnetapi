@@ -3,7 +3,6 @@ import { validateFen as chessjsValidateFen } from "chess.js";
 export const MAIA3_RATING_MIN = 600;
 export const MAIA3_RATING_MAX = 2600;
 
-// All 21 canonical Maia3 rating levels (every 100 from 600–2600)
 export const MAIA3_ALL_LEVELS: number[] = Array.from(
   { length: 21 },
   (_, i) => 600 + i * 100,
@@ -19,10 +18,7 @@ export interface ValidationResult {
   errors: ValidationError[];
 }
 
-/**
- * Validates a FEN string structurally and legally via chess.js.
- * Returns a typed result rather than throwing.
- */
+
 export function validateFen(fen: unknown): ValidationResult {
   const errors: ValidationError[] = [];
 
@@ -31,7 +27,6 @@ export function validateFen(fen: unknown): ValidationResult {
     return { valid: false, errors };
   }
 
-  // chess.js validateFen() returns { ok, error }
   const check = chessjsValidateFen(fen.trim());
   if (!check.ok) {
     errors.push({
@@ -43,12 +38,9 @@ export function validateFen(fen: unknown): ValidationResult {
   return { valid: errors.length === 0, errors };
 }
 
-/**
- * Validates the `engine` field.
- * Allowed values: maia3 | maia2 | leela | elite-leela
- */
+
 export function validateEngine(engine: unknown): ValidationResult {
-  const VALID_ENGINES = ["maia3", "maia2", "leela", "elite-leela"] as const;
+  const VALID_ENGINES = ["maia3", "leela", "elite-leela"] as const;
   const errors: ValidationError[] = [];
 
   if (typeof engine !== "string" || engine.trim() === "") {
@@ -69,10 +61,7 @@ export function validateEngine(engine: unknown): ValidationResult {
   return { valid: errors.length === 0, errors };
 }
 
-/**
- * Validates the `rating` field for Maia3/Maia2 engines.
- * Must be an integer in [600, 2600].
- */
+
 export function validateMaiaRating(rating: unknown): ValidationResult {
   const errors: ValidationError[] = [];
 
@@ -104,10 +93,7 @@ export function validateMaiaRating(rating: unknown): ValidationResult {
   return { valid: errors.length === 0, errors };
 }
 
-/**
- * Collects all validation errors across the provided fields and returns
- * a combined result.  Caller decides which validators to run based on engine.
- */
+
 export function combineValidations(
   ...results: ValidationResult[]
 ): ValidationResult {

@@ -1,6 +1,5 @@
 import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
-import { rateLimit } from "express-rate-limit";
 import { ModelLoaderPool } from "./nets/ModelLoaderPool.js";
 import {
   validateFen,
@@ -11,30 +10,20 @@ import {
 
 const DISABLE_CACHE_MODE = process.env.DISABLE_CACHE?.toLowerCase() === "true" || process.argv.includes("dev");
 
+const configuredToken = process.env.CONFIGURED_AUTH_BEARER;
+
+const DISABLE_AUTHORIZATION_MODE = !configuredToken || DISABLE_CACHE_MODE;
+
 const app = express();
 
 app.set("trust proxy", true);
 app.use(cors());
 app.use(express.json());
 
-const limiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 120,
-  standardHeaders: "draft-7",
-  legacyHeaders: false,
-  message: { error: "Too many requests, please try again after a minute." },
-  keyGenerator: (req: Request) => {
-    return req.ip || req.socket.remoteAddress || "unknown";
-  },
-  skip: (req: Request) => {
-    return false;
-  },
-});
 
 const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
-  const configuredToken = process.env.CONFIGURED_AUTH_BEARER;
 
-  if (!configuredToken || DISABLE_CACHE_MODE) {
+  if (DISABLE_AUTHORIZATION_MODE) {
     console.warn(
       "CONFIGURED_AUTH_BEARER not set. Running without authorization."
     );
@@ -142,5 +131,5 @@ const PORT = process.env.PORT || 8080;
 
 
 app.listen(PORT, () => {
-  console.log(`Chess Neural Net Database Server running on port ${PORT} DISABLE_CACHE_MODE: ${DISABLE_CACHE_MODE}`);
+  console.log(`Chess Neural Net Engine Database (NNEDB) Server running on port ${PORT} DISABLE_CACHE_MODE: ${DISABLE_CACHE_MODE} DISABLE_AUTHORIZATION_MODE: ${DISABLE_AUTHORIZATION_MODE}`);
 });
