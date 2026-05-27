@@ -68,3 +68,21 @@ export const lichessToSanEval = (data: LichessData): SanMaiaEvaluation => {
     policy,
   }
 }
+
+/**
+ * Applies a UCI move to a FEN and returns the resulting FEN.
+ * Returns null if the move is illegal or the FEN is invalid.
+ */
+export const applyUciMove = (uci: string, fen: string): string | null => {
+  try {
+    const chess = new Chess(fen)
+    const move = chess.move({
+      from: uci.slice(0, 2),
+      to: uci.slice(2, 4),
+      promotion: uci[4] as any,
+    })
+    return move ? chess.fen() : null
+  } catch {
+    return null
+  }
+}

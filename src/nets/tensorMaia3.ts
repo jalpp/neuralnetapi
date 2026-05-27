@@ -1,4 +1,3 @@
-
 import { Chess } from 'chess.js'
 import allPossibleMovesMaia3Dict from './data/all_moves_maia3.json' with { type: "json" };
 import allPossibleMovesMaia3ReversedDict from './data/all_moves_reversed_maia3.json' with { type: "json" };
@@ -8,18 +7,26 @@ const allPossibleMovesMaia3 = allPossibleMovesMaia3Dict as Record<string, number
 export const allPossibleMovesMaia3Reversed =
   allPossibleMovesMaia3ReversedDict as Record<number, string>
 
-/**
- * Mirrors a square on the chess board vertically (top-to-bottom flip).
- */
+export interface SideWdl {
+  win: number;
+  draw: number;
+  loss: number;
+}
+
+export interface rawWdl {
+  win: number;
+  loss: number;
+  draw: number;
+  whiteWdl: SideWdl;
+  blackWdl: SideWdl;
+}
+
 function mirrorSquare(square: string): string {
   const file = square.charAt(0)
   const rank = (9 - parseInt(square.charAt(1))).toString()
   return file + rank
 }
 
-/**
- * Mirrors a chess move in UCI notation vertically.
- */
 export function mirrorMove(moveUci: string): string {
   const isPromotion = moveUci.length > 4
   const mirroredStart = mirrorSquare(moveUci.substring(0, 2))
@@ -54,9 +61,6 @@ function mirrorEnPassant(ep: string): string {
   return ep.charAt(0) + (9 - parseInt(ep.charAt(1))).toString()
 }
 
-/**
- * Mirrors a FEN string so the side to move is always white.
- */
 export function mirrorFEN(fen: string): string {
   const parts = fen.split(' ')
   const piecePlacement = parts[0]
@@ -79,10 +83,6 @@ export function mirrorFEN(fen: string): string {
   ].join(' ')
 }
 
-/**
- * Converts a board position to Maia 3 token tensor.
- * Output shape: (64, 12) flattened — each square has 12 piece-type channels.
- */
 function boardToMaia3Tokens(fen: string): Float32Array {
   const piecePlacement = fen.split(' ')[0]
   const pieceTypes = ['P', 'N', 'B', 'R', 'Q', 'K', 'p', 'n', 'b', 'r', 'q', 'k']
@@ -109,12 +109,6 @@ function boardToMaia3Tokens(fen: string): Float32Array {
   return tensor
 }
 
-/**
- * Preprocesses a FEN for Maia 3 inference.
- * - Mirrors the board if it's black's turn (Maia 3 always sees white-to-move).
- * - Returns (64*12) board tokens and legal moves mask over 4352 moves.
- * - ELO is passed as raw float (Maia 3 uses continuous interpolation, not categories).
- */
 export function preprocessMaia3(fen: string): {
   boardTokens: Float32Array
   legalMoves: Float32Array
@@ -141,16 +135,6 @@ export function preprocessMaia3(fen: string): {
   return { boardTokens, legalMoves }
 }
 
-export interface rawWdl {
-  win: number;
-  loss: number;
-  draw: number;
-}
-
-/**
- * Processes Maia 3 ONNX outputs.
- * Maia 3 outputs LDW (Loss/Draw/Win) logits and uses a 4352-dimensional move space.
- */
 export function processOutputsMaia3(
   fen: string,
   logitsMove: Float32Array,
@@ -159,7 +143,6 @@ export function processOutputsMaia3(
 ): { policy: Record<string, number>; value: number; rawWdl: rawWdl } {
   const wdl = logitsValue
 
-  // Model output: index 0 = Loss, 1 = Draw, 2 = Win (for side-to-move)
   const maxWdl = Math.max(wdl[0], wdl[1], wdl[2])
   const expL = Math.exp(wdl[0] - maxWdl)
   const expD = Math.exp(wdl[1] - maxWdl)
@@ -170,20 +153,21 @@ export function processOutputsMaia3(
   const probL = expL / sumExp
   const probD = expD / sumExp
 
-  let winProb = (expW + 0.5 * expD) / sumExp
   const blackToMove = fen.split(' ')[1] === 'b'
+  let winProb = (expW + 0.5 * expD) / sumExp
   if (blackToMove) winProb = 1 - winProb
-
-  // Maia3 mirrors the FEN for black-to-move, so the model always sees white-to-move.
-  // probW is therefore "mirrored-white wins" = "original-black wins".
-  // winProb is already flipped above for display purposes.
-  // rawWdl must also be flipped so win = original-white wins, matching wdlToLc0Cp convention.
-  const rawWdl: rawWdl = {
-    win:  blackToMove ? probL : probW,
-    loss: blackToMove ? probW : probL,
-    draw: probD,
-  }
   winProb = Math.round(winProb * 10000) / 10000
+
+  const whiteWin  = blackToMove ? probL : probW
+  const whiteLoss = blackToMove ? probW : probL
+
+  const rawWdl: rawWdl = {
+    win:  whiteWin,
+    loss: whiteLoss,
+    draw: probD,
+    whiteWdl: { win: whiteWin,  draw: probD, loss: whiteLoss },
+    blackWdl: { win: whiteLoss, draw: probD, loss: whiteWin  },
+  }
 
   const legalMoveIndices = Array.from(legalMoves)
     .map((v, i) => (v > 0 ? i : -1))
@@ -210,5 +194,5 @@ export function processOutputsMaia3(
     Object.entries(moveProbs).sort(([, a], [, b]) => b - a),
   )
 
-  return { policy: sortedPolicy, value: winProb, rawWdl: rawWdl }
+  return { policy: sortedPolicy, value: winProb, rawWdl }
 }

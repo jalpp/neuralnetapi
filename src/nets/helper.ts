@@ -10,48 +10,34 @@ export function pickOutput(
   throw new Error(`Missing output: ${names.join(', ')}`)
 }
 
-/**
- * Convert WDL (Win/Draw/Loss) tensor to win probability for the side to move
- */
-export function wdlToWinProb(wdl: Tensor, fen: string): {winProb: number, rawWdl: rawWdl} {
+export function wdlToWinProb(wdl: Tensor, fen: string): { winProb: number; rawWdl: rawWdl } {
   const data = wdl.data as Float32Array
-  
-  // Apply softmax to get probabilities
+
   const max = Math.max(...data)
   const exp = Array.from(data).map((v) => Math.exp(v - max))
   const sum = exp.reduce((a, b) => a + b, 0)
   const probs = exp.map((v) => v / sum)
-  
-  // LC0 WDL format: [loss, draw, win] from white's perspective
+
   const draw = probs[1]
   const whiteWin = probs[2]
   const whiteLoss = probs[0]
-  
-  // Calculate white's win probability
+
   const whiteWinProb = whiteWin + 0.5 * draw
-  
-  // If it's black's turn, invert the probability AND swap win/loss in rawWdl
-  // so that rawWdl is always side-to-move relative (win = side to move wins)
-  // This is required for wdlToLc0Cp to produce the correct sign
-  const turn = fen.split(' ')[1]
-  const isBlack = turn === 'b'
+  const isBlack = fen.split(' ')[1] === 'b'
 
   const rawWdl: rawWdl = {
     win:  isBlack ? whiteLoss : whiteWin,
     loss: isBlack ? whiteWin  : whiteLoss,
-    draw: draw,
+    draw,
+    whiteWdl: { win: whiteWin,  draw, loss: whiteLoss },
+    blackWdl: { win: whiteLoss, draw, loss: whiteWin  },
   }
 
   return {
     winProb: isBlack ? 1 - whiteWinProb : whiteWinProb,
-    rawWdl
+    rawWdl,
   }
 }
-
-
-/* ======================================================
-   Leela policy processing
-====================================================== */
 
 export function processLeelaPolicy(
   fen: string,
@@ -61,7 +47,6 @@ export function processLeelaPolicy(
   const logits = logitsTensor.data as Float32Array
   const isBlack = fen.split(' ')[1] === 'b'
 
-  // Get indices of legal moves
   const legalIndices: number[] = []
   for (let i = 0; i < legalMoves.length; i++) {
     if (legalMoves[i] > 0) {
@@ -69,19 +54,16 @@ export function processLeelaPolicy(
     }
   }
 
-  // Map to UCI moves (mirror if black)
   const moves = legalIndices.map((i) => {
     const move = allPossibleMovesReversed[i]
     return isBlack ? mirrorMove(move) : move
   })
 
-  // Apply softmax over legal moves only
   const legalLogits = legalIndices.map((i) => logits[i])
   const max = Math.max(...legalLogits)
   const exp = legalLogits.map((v) => Math.exp(v - max))
   const sum = exp.reduce((a, b) => a + b, 0)
 
-  // Build policy dictionary
   const policy: Record<string, number> = {}
   for (let i = 0; i < moves.length; i++) {
     policy[moves[i]] = exp[i] / sum
@@ -90,11 +72,6 @@ export function processLeelaPolicy(
   return policy
 }
 
-/* ======================================================
-   Maia 2 policy + value
-====================================================== */
-
-// Helper function for processMaiaPolicy
 export function processMaiaPolicy(
   fen: string,
   policyTensor: Tensor,
@@ -114,7 +91,6 @@ export function processMaiaPolicy(
 
   winProb = Math.round(winProb * 10000) / 10000
 
-  // Get indices of legal moves
   const legalMoveIndices = legalMoves
     .map((value, index) => (value > 0 ? index : -1))
     .filter((index) => index !== -1)
@@ -126,7 +102,6 @@ export function processMaiaPolicy(
       console.warn(`Move index ${moveIndex} not found in allPossibleMovesReversedMaia`)
       continue
     }
-    
     if (black_flag) {
       legalMovesMirrored.push(mirrorMove(move))
     } else {
@@ -134,7 +109,6 @@ export function processMaiaPolicy(
     }
   }
 
-  // Extract logits for legal moves (only for moves that were found)
   const legalLogits = []
   for (let i = 0; i < legalMoveIndices.length; i++) {
     if (i < legalMovesMirrored.length) {
@@ -147,13 +121,11 @@ export function processMaiaPolicy(
     return { policy: {}, value: winProb }
   }
 
-  // Compute softmax over the legal logits
   const maxLogit = Math.max(...legalLogits)
   const expLogits = legalLogits.map((logit) => Math.exp(logit - maxLogit))
   const sumExp = expLogits.reduce((a, b) => a + b, 0)
   const probs = expLogits.map((expLogit) => expLogit / sumExp)
 
-  // Map the probabilities back to their move indices
   const moveProbs: Record<string, number> = {}
   for (let i = 0; i < legalMovesMirrored.length; i++) {
     moveProbs[legalMovesMirrored[i]] = probs[i]
@@ -171,4 +143,3 @@ export function processMaiaPolicy(
 
   return { policy: sortedMoveProbs, value: winProb }
 }
-
