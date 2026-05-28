@@ -1,4 +1,4 @@
-import { rawWdl } from "./tensorMaia3.js";
+import { rawWdl } from "./types.js";
 
 /**
  * Converts a neural net win probability [0, 1] to Q in [-1, 1].

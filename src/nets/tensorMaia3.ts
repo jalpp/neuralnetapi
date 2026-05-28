@@ -1,25 +1,12 @@
 import { Chess } from 'chess.js'
 import allPossibleMovesMaia3Dict from './data/all_moves_maia3.json' with { type: "json" };
 import allPossibleMovesMaia3ReversedDict from './data/all_moves_reversed_maia3.json' with { type: "json" };
-
+import { rawWdl } from './types.js';
 const allPossibleMovesMaia3 = allPossibleMovesMaia3Dict as Record<string, number>
 
 export const allPossibleMovesMaia3Reversed =
   allPossibleMovesMaia3ReversedDict as Record<number, string>
 
-export interface SideWdl {
-  win: number;
-  draw: number;
-  loss: number;
-}
-
-export interface rawWdl {
-  win: number;
-  loss: number;
-  draw: number;
-  whiteWdl: SideWdl;
-  blackWdl: SideWdl;
-}
 
 function mirrorSquare(square: string): string {
   const file = square.charAt(0)

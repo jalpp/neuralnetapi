@@ -1,50 +1,61 @@
-import { Chess } from "chess.js"
-import NetModel from "./NetModel.js"
-import { rawWdl } from "./tensorMaia3.js"
+import { Timestamp } from "@google-cloud/firestore";
 
-export type NetStatus =
-  | 'loading'
-  | 'no-cache'
-  | 'downloading'
-  | 'ready'
-  | 'error'
-
-export type ModelType = 'maia2' | 'bigLeela' | 'elitemaia' | "maia3"
-
-export interface MaiaEngine {
-  maia2?: NetModel
-  bigLeela?: NetModel
-  elitemaia?: NetModel
-  status: Record<ModelType, NetStatus>
-  progress: Record<ModelType, number>
-  downloadModel: (modelType: ModelType) => Promise<void>
-  activeModels: ModelType[]
+export interface SideWdl {
+  win: number;
+  draw: number;
+  loss: number;
 }
+
+export interface rawWdl {
+  win: number;
+  loss: number;
+  draw: number;
+  whiteWdl: SideWdl;
+  blackWdl: SideWdl;
+}
+
+export type NetName = "leela" | "elite_leela" | `maia3_${number}`;
+
+export interface MoveProbability {
+  move: string;
+  probability: number;
+  percentage: string;
+  wdl?: SideWdl;
+  whiteWdl?: SideWdl;
+  blackWdl?: SideWdl;
+}
+
+export interface EngineAnalysis {
+  topMoves: MoveProbability[];
+  inBook?: boolean;
+  uciEval?: MaiaEvaluation;
+  maiaRating?: number;
+  HumanEstimateEval?: string;
+  estimatedConvertedEval?: string;
+  LeelaZeroEstimateEval?: string;
+  cacheHit?: boolean;
+  _fen?: string;
+  _net?: NetName;
+  _createdAt?: Timestamp;
+  _schemaVersion?: number;
+}
+
+export type WdlMaps = {
+  wdlMap: Map<string, SideWdl>;
+  whiteWdlMap: Map<string, SideWdl>;
+  blackWdlMap: Map<string, SideWdl>;
+};
 
 
 export interface MaiaEvaluation {
   value: number
   policy: { [key: string]: number }
   rawWdl?: rawWdl
-
 }
 
-export const uciToSan = (uci: string, fen: string): string => {
-  try {
-    const chess = new Chess(fen);
-    const move = chess.move({
-      from: uci.substring(0, 2),
-      to: uci.substring(2, 4),
-      promotion: uci.length > 4 ? uci[4] : undefined,
-    });
-    return move ? move.san : uci;
-  } catch {
-    return uci;
-  }
-};
-export type MoveCategory = 'brilliant' | 'tricky' | 'normal' | 'book';
-
-
-export function getPolicyValue(evaluation: MaiaEvaluation, moveKey: string): number {
-  return evaluation.policy[moveKey] ?? 0;
+export interface SanMaiaEvaluation {
+  value: number
+  policy: Record<string, number>
 }
+
+

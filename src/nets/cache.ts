@@ -1,9 +1,12 @@
 import { Firestore, Timestamp } from "@google-cloud/firestore";
-import { EngineAnalysis, NetName } from "./ModelLoader.js";
+import { EngineAnalysis, NetName } from "./types.js";
+import { hasPerMoveWdl } from "./helper.js";
 
 const db = new Firestore({
   projectId: process.env.FIRESTORE_PROJECT_ID,
 });
+
+export const CACHE_SCHEMA_VERSION = 1;
 
 const COLLECTION = "nn_cache";
 const BATCH_COLLECTION = "nn_batch_results";
@@ -105,3 +108,11 @@ export async function putBatchCached(
     console.error("[cache] batch write error:", err);
   }
 }
+
+export function isCacheValid(entry: EngineAnalysis, requireWdl: boolean): boolean {
+  if (entry._schemaVersion !== CACHE_SCHEMA_VERSION) return false;
+  if (!entry.topMoves || entry.topMoves.length === 0) return false;
+  if (requireWdl && !hasPerMoveWdl(entry)) return false;
+  return true;
+}
+
