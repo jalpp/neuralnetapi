@@ -1,12 +1,13 @@
 import { Firestore, Timestamp } from "@google-cloud/firestore";
 import { EngineAnalysis, NetName } from "./types.js";
 import { hasPerMoveWdl } from "./helper.js";
+import { CACHE_SCHEMA_VERSION } from "./config.js";
 
 const db = new Firestore({
   projectId: process.env.FIRESTORE_PROJECT_ID,
 });
 
-export const CACHE_SCHEMA_VERSION = 1;
+
 
 const COLLECTION = "nn_cache";
 const BATCH_COLLECTION = "nn_batch_results";

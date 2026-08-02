@@ -7,16 +7,12 @@ import {
   validateMaiaRating,
   combineValidations,
 } from "./validation.js";
+import { DISABLE_AUTHORIZATION_MODE, configuredToken, DISABLE_CACHE_MODE, TRUST_PROXY, DISABLE_WRITES, PORT } from "./nets/config.js";
 
-const DISABLE_CACHE_MODE = process.env.DISABLE_CACHE?.toLowerCase() === "true" || process.argv.includes("dev");
-
-const configuredToken = process.env.CONFIGURED_AUTH_BEARER;
-
-const DISABLE_AUTHORIZATION_MODE = !configuredToken || DISABLE_CACHE_MODE;
 
 const app = express();
 
-app.set("trust proxy", true);
+app.set("trust proxy", TRUST_PROXY);
 app.use(cors());
 app.use(express.json());
 
@@ -109,8 +105,11 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   res.status(500).json({ error: "Internal server error" });
 });
 
-const PORT = process.env.PORT || 8080;
+
 
 app.listen(PORT, () => {
-  console.log(`Chess Neural Net Engine Database (NNEDB) Server running on port ${PORT} DISABLE_CACHE_MODE: ${DISABLE_CACHE_MODE} DISABLE_AUTHORIZATION_MODE: ${DISABLE_AUTHORIZATION_MODE}`);
+  console.log(`Chess Neural Net Engine Database (NNEDB) Server running on port ${PORT} 
+    DISABLE_CACHE_MODE: ${DISABLE_CACHE_MODE} 
+    DISABLE_AUTHORIZATION_MODE: ${DISABLE_AUTHORIZATION_MODE}
+    DISABLE_WRITES: ${DISABLE_WRITES}`);
 });
